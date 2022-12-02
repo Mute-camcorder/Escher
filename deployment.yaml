@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: escher
+  namespace: minecraft
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: escher
+  template:
+    metadata:
+      labels:
+        app: escher
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.kubernetes.io/instance-type
+                operator: In
+                values:
+                - s-1vcpu-2gb
+      containers:
+      - name: escher
+        image: registry.digitalocean.com/cam-tainers/escher
+        env:
+          - name: DISCORD_SERVER_ID
+            value: "995494129146548235"
+        envFrom:
+          - secretRef:
+              name: digitalocean-access-token
+          - secretRef:
+              name: discord-token
