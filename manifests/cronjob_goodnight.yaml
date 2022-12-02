@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: escher-goodnight
+  namespace: minecraft
+spec:
+  jobTemplate:
+    metadata:
+      name: escher-goodnight
+    spec:
+      template:
+        spec:
+          containers:
+          - image: registry.digitalocean.com/cam-tainers/escher
+            name: escher-goodnight
+            command: ["bundle", "exec", "ruby", "main.rb", "--server_off"]
+            env:
+              - name: DISCORD_SERVER_ID
+                value: "dummy value"
+              - name: DISCORD_TOKEN
+                value: "dummy value"
+            envFrom:
+              - secretRef:
+                  name: digitalocean-access-token
+          restartPolicy: Never
+  schedule: 0 16 * * *

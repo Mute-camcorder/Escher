@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: escher-wakeup
+  namespace: minecraft
+spec:
+  template:
+    spec:
+      containers:
+      - image: registry.digitalocean.com/cam-tainers/escher
+        name: escher-wakeup
+        command: ["bundle", "exec", "ruby", "main.rb", "--server_on"]
+        env:
+          - name: DISCORD_SERVER_ID
+            value: "dummy value"
+          - name: DISCORD_TOKEN
+            value: "dummy value"
+        envFrom:
+          - secretRef:
+              name: digitalocean-access-token
+      restartPolicy: Never

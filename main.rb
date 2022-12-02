@@ -5,6 +5,7 @@ require 'droplet_kit'
 DO_TOKEN = ENV.fetch "DIGITALOCEAN_ACCESS_TOKEN"
 DISCORD_TOKEN = ENV.fetch "DISCORD_TOKEN"
 DISCORD_SERVER_ID = ENV.fetch "DISCORD_SERVER_ID"
+DO_CLIENT = DropletKit::Client.new(access_token: DO_TOKEN)
 
 def server_on
   cluster = find_cluster
@@ -31,30 +32,42 @@ def find_cluster
   DO_CLIENT.kubernetes_clusters.all.first
 end
 
-DO_CLIENT = DropletKit::Client.new(access_token: DO_TOKEN)
-BOT = Discordrb::Bot.new(token: DISCORD_TOKEN, intents: [:server_messages])
 
-command_names = BOT.get_application_commands(server_id: DISCORD_SERVER_ID).map {|c| c.name}
-
-if not command_names.include? "server_on" then
-  puts "Creating 'server_on' command"
-  BOT.register_application_command(:server_on, 'Turn Minecraft server on', server_id: DISCORD_SERVER_ID)
+def register_commands_if_not_exist
+  command_names = $BOT.get_application_commands(server_id: DISCORD_SERVER_ID).map {|c| c.name}
+  if not command_names.include? "server_on" then
+    puts "Creating 'server_on' command"
+    $BOT.register_application_command(:server_on, 'Turn Minecraft server on', server_id: DISCORD_SERVER_ID)
+  end
+  if not command_names.include? "server_off" then
+    puts "Creating 'server_off' command"
+    $BOT.register_application_command(:server_off, 'Turn Minecraft server off', server_id: DISCORD_SERVER_ID)
+  end
 end
-if not command_names.include? "server_off" then
-  puts "Creating 'server_off' command"
-  BOT.register_application_command(:server_off, 'Turn Minecraft server off', server_id: DISCORD_SERVER_ID)
+
+def register_command_handlers
+  $BOT.application_command(:server_on, server_id: DISCORD_SERVER_ID) do |event|
+    event.respond(content: 'Server is spinning up, please be patient.')
+    server_on
+  end
+
+  $BOT.application_command(:server_off, server_id: DISCORD_SERVER_ID) do |event|
+    event.respond(content: 'Server is spinning up, please be patient.')
+    server_off
+  end
 end
 
-BOT.application_command(:server_on, server_id: DISCORD_SERVER_ID) do |event|
-  event.respond(content: 'Server is spinning up, please be patient.')
+if ARGV.size == 0
+  $BOT = Discordrb::Bot.new(token: DISCORD_TOKEN, intents: [:server_messages])
+  register_commands_if_not_exist
+  register_command_handlers
+  $BOT.run
+elsif ARGV.include? "--server_on"
   server_on
-end
-
-BOT.application_command(:server_off, server_id: DISCORD_SERVER_ID) do |event|
-  event.respond(content: 'Server is spinning up, please be patient.')
+elsif ARGV.include? "--server_off"
   server_off
+elsif ARGV.include? "--lol"
+  puts ARGV
 end
-
-BOT.run
 
 
